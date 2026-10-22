@@ -1,0 +1,33 @@
+﻿import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { errorHandler } from './middleware/errorHandler';
+import authRoutes from './routes/auth.routes';
+import groupsRoutes from './routes/groups.routes';
+import membersRoutes from './routes/members.routes';
+import expensesRoutes from './routes/expenses.routes';
+import balancesRoutes from './routes/balances.routes';
+import settlementsRoutes from './routes/settlements.routes';
+import { authMiddleware } from './middleware/auth.middleware';
+
+const app = express();
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/groups', authMiddleware, groupsRoutes);
+app.use('/api/groups/:groupId/members', authMiddleware, membersRoutes);
+app.use('/api/groups/:groupId/expenses', authMiddleware, expensesRoutes);
+app.use('/api/groups/:groupId/balances', authMiddleware, balancesRoutes);
+app.use('/api/groups/:groupId/settlements', authMiddleware, settlementsRoutes);
+
+app.use(errorHandler);
+
+export default app;
