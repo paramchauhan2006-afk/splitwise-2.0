@@ -10,7 +10,7 @@ This document defines the complete Prisma schema for Splitwise 2.0. All models a
 
 **Conversion Formula**: ₹1 = 100 paise
 
-**Rounding Rule**: When splitting equally and the total does not divide evenly, the remainder paise is distributed to ensure the sum equals the total. Example: Rs. 100 ÷ 3 members → splits are [34, 33, 33] paise (3400, 3300, 3300). The first member (or the member with the largest share if using weighted splits) receives the extra paise.
+**Rounding Rule**: Whee: Rs. 100 ÷ 3 members → spln splitting equally and the total does not divide evenly, the remainder paise is distributed to ensure the sum equals the total. Examplits are [34, 33, 33] paise (3400, 3300, 3300). The first member (or the member with the largest share if using weighted splits) receives the extra paise.
 
 **Split Invariant**: The sum of all `ExpenseSplit.amountPaise` for an expense MUST equal `Expense.totalAmountPaise`. This is enforced in the service layer, not at the database level.
 

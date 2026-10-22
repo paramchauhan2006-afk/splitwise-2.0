@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  phone        String?
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdGroups   Group[]        @relation("GroupCreator")
+  memberships     GroupMember[]
+  expensesPaid    Expense[]      @relation("ExpensePayer")
+  expensesCreated Expense[]      @relation("ExpenseCreator")
+  notifications   Notification[]
+}
+
+model Group {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  createdByUserId String
+  isTrip          Boolean   @default(false)
+  tripEndDate     DateTime?
+  isArchived      Boolean   @default(false)
+  defaultCurrency String    @default("INR")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  createdBy     User          @relation("GroupCreator", fields: [createdByUserId], references: [id])
+  members       GroupMember[]
+  expenses      Expense[]
+  settlements   Settlement[]
+  notifications Notification[]
+}
+
+model GroupMember {
+  id               String     @id @default(cuid())
+  groupId          String
+  userId           String?
+  placeholderName  String?
+  placeholderPhone String?
+  placeholderEmail String?
+  role             MemberRole @default(MEMBER)
+  joinedAt         DateTime   @default(now())
+
+  group           Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user            User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenseSplits   ExpenseSplit[]
+  settlementsFrom Settlement[]   @relation("SettlementFrom")
+  settlementsTo   Settlement[]   @relation("SettlementTo")
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+enum MemberRole {
+  ADMIN
+  MEMBER
+}
+
+model Expense {
+  id                      String    @id @default(cuid())
+  groupId                 String
+  description             String
+  totalAmountPaise        Int
+  paidByUserId            String
+  splitType               SplitType
+  date                    DateTime  @default(now())
+  notes                   String?
+  receiptImageUrl         String?
+  isRecurring             Boolean   @default(false)
+  recurringCronExpression String?
+  createdByUserId         String
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  group         Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidBy        User           @relation("ExpensePayer", fields: [paidByUserId], references: [id])
+  createdBy     User           @relation("ExpenseCreator", fields: [createdByUserId], references: [id])
+  splits        ExpenseSplit[]
+  notifications Notification[]
+
+  @@index([groupId])
+  @@index([paidByUserId])
+  @@index([date])
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+  SHARES
+}
+
+model ExpenseSplit {
+  id            String    @id @default(cuid())
+  expenseId     String
+  groupMemberId String
+  amountPaise   Int
+  isSettled     Boolean   @default(false)
+  settledAt     DateTime?
+
+  expense     Expense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  groupMember GroupMember @relation(fields: [groupMemberId], references: [id], onDelete: Cascade)
+
+  @@index([expenseId])
+  @@index([groupMemberId])
+}
+
+model Settlement {
+  id                String           @id @default(cuid())
+  groupId           String
+  fromGroupMemberId String
+  toGroupMemberId   String
+  amountPaise       Int
+  method            SettlementMethod
+  upiTransactionId  String?
+  note              String?
+  settledAt         DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+
+  group      Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromMember GroupMember @relation("SettlementFrom", fields: [fromGroupMemberId], references: [id])
+  toMember   GroupMember @relation("SettlementTo", fields: [toGroupMemberId], references: [id])
+
+  @@index([groupId])
+  @@index([fromGroupMemberId])
+  @@index([toGroupMemberId])
+}
+
+enum SettlementMethod {
+  MANUAL
+  UPI_DEEPLINK
+  UPI_GATEWAY
+}
+
+model Notification {
+  id               String           @id @default(cuid())
+  userId           String
+  type             NotificationType
+  title            String
+  body             String
+  isRead           Boolean          @default(false)
+  relatedGroupId   String?
+  relatedExpenseId String?
+  createdAt        DateTime         @default(now())
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relatedGroup   Group?   @relation(fields: [relatedGroupId], references: [id], onDelete: Cascade)
+  relatedExpense Expense? @relation(fields: [relatedExpenseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  REMINDER
+  TRIP_ARCHIVED
+  EXPENSE_ADDED
+  SETTLEMENT_RECEIVED
+  SETTLEMENT_SENT
+}
