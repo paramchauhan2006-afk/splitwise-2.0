@@ -27,7 +27,7 @@ type SplitType = 'EQUAL' | 'EXACT' | 'PERCENTAGE' | 'SHARES';
 
 interface Split {
   memberId: string;
-  amountPaise?: number;
+  amountRupees?: number;
   percentage?: number;
   shares?: number;
 }
@@ -56,9 +56,7 @@ export function CreateExpensePage() {
 
   useEffect(() => {
     if (!groupData?.members || groupData.members.length === 0) return;
-
     setSelectedMembers(new Set(groupData.members.map((m) => m.id)));
-
     const initialSplits: Record<string, Split> = {};
     groupData.members.forEach((member) => {
       initialSplits[member.id] = { memberId: member.id, shares: 1 };
@@ -80,13 +78,17 @@ export function CreateExpensePage() {
     setSelectedMembers(newSelected);
   };
 
-  const handleSplitChange = (memberId: string, field: 'amountPaise' | 'percentage' | 'shares', value: string) => {
+  const handleSplitChange = (
+    memberId: string,
+    field: 'amountRupees' | 'percentage' | 'shares',
+    value: string
+  ) => {
     setSplits((prev) => ({
       ...prev,
       [memberId]: {
         ...prev[memberId],
         memberId,
-        [field]: field === 'amountPaise' ? Math.floor(parseFloat(value || '0') * 100) : parseFloat(value || '0'),
+        [field]: parseFloat(value || '0'),
       },
     }));
   };
@@ -116,13 +118,14 @@ export function CreateExpensePage() {
       return;
     }
 
-    // Validation based on split type
     if (splitType === 'EXACT') {
-      const sum = Array.from(selectedMembers).reduce((acc, memberId) => {
-        return acc + (splits[memberId]?.amountPaise || 0);
+      // User enters rupees — compare rupee sum to rupee total
+      const sumRupees = Array.from(selectedMembers).reduce((acc, memberId) => {
+        return acc + (splits[memberId]?.amountRupees || 0);
       }, 0);
-      if (Math.abs(sum - totalAmountPaise) > 1) {
-        setError(`Split amounts must equal total. Current sum: â‚¹${(sum / 100).toFixed(2)}`);
+      const totalRupees = parseFloat(amount);
+      if (Math.abs(sumRupees - totalRupees) > 0.01) {
+        setError(`Split amounts must equal total. Current sum: ${sumRupees.toFixed(2)}`);
         return;
       }
     }
@@ -137,7 +140,6 @@ export function CreateExpensePage() {
       }
     }
 
-    // Build payload
     const payload: any = {
       description: description.trim(),
       totalAmountPaise,
@@ -149,9 +151,10 @@ export function CreateExpensePage() {
     if (splitType === 'EQUAL') {
       payload.memberIds = Array.from(selectedMembers);
     } else if (splitType === 'EXACT') {
+      // Convert rupees to paise at submit time
       payload.splits = Array.from(selectedMembers).map((memberId) => ({
         memberId,
-        amountPaise: splits[memberId]?.amountPaise || 0,
+        amountPaise: Math.floor((splits[memberId]?.amountRupees || 0) * 100),
       }));
     } else if (splitType === 'PERCENTAGE') {
       payload.splits = Array.from(selectedMembers).map((memberId) => ({
@@ -196,7 +199,7 @@ export function CreateExpensePage() {
           marginBottom: '10px',
         }}
       >
-        â† Back to Group
+        Back to Group
       </button>
 
       <h1>Add Expense to {groupData.name}</h1>
@@ -219,7 +222,7 @@ export function CreateExpensePage() {
 
         <div>
           <label htmlFor="amount" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Amount (â‚¹) *
+            Amount (Rs.) *
           </label>
           <input
             id="amount"
@@ -316,11 +319,10 @@ export function CreateExpensePage() {
                   <span style={{ flex: 1 }}>{getMemberDisplayName(member)}</span>
                   {selectedMembers.has(member.id) && (
                     <input
-                      type="number"
-                      step="0.01"
+                      type="text"
                       placeholder="0.00"
-                      value={splits[member.id]?.amountPaise ? (splits[member.id].amountPaise! / 100).toFixed(2) : ''}
-                      onChange={(e) => handleSplitChange(member.id, 'amountPaise', e.target.value)}
+                      value={splits[member.id]?.amountRupees || ''}
+                      onChange={(e) => handleSplitChange(member.id, 'amountRupees', e.target.value)}
                       style={{ width: '100px', padding: '6px' }}
                     />
                   )}
@@ -342,8 +344,7 @@ export function CreateExpensePage() {
                   {selectedMembers.has(member.id) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         placeholder="0"
                         value={splits[member.id]?.percentage || ''}
                         onChange={(e) => handleSplitChange(member.id, 'percentage', e.target.value)}
@@ -369,10 +370,9 @@ export function CreateExpensePage() {
                   <span style={{ flex: 1 }}>{getMemberDisplayName(member)}</span>
                   {selectedMembers.has(member.id) && (
                     <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={splits[member.id]?.shares || 1}
+                      type="text"
+                      placeholder="1"
+                      value={splits[member.id]?.shares || ''}
                       onChange={(e) => handleSplitChange(member.id, 'shares', e.target.value)}
                       style={{ width: '80px', padding: '6px' }}
                     />
