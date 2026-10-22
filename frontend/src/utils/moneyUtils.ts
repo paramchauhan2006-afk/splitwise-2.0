@@ -1,4 +1,4 @@
-﻿export function formatCurrency(paise: number): string {
+export function formatCurrency(paise: number): string {
   const rupees = paise / 100;
   return '₹' + rupees.toLocaleString('en-IN', {
     minimumFractionDigits: 2,

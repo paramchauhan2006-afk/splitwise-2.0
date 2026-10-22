@@ -49,13 +49,21 @@ export async function createExpense(
     throw new Error('Split Invariant violated');
   }
 
+  const payerMember = await prisma.groupMember.findUnique({
+    where: { id: data.paidByMemberId },
+  });
+
+  if (!payerMember || !payerMember.userId) {
+    throw new Error('Payer must be a registered user, not a placeholder');
+  }
+
   return prisma.$transaction(async (tx) => {
     const expense = await tx.expense.create({
       data: {
         groupId,
         description: data.description,
         totalAmountPaise: data.totalAmountPaise,
-        paidByUserId: data.paidByMemberId,
+        paidByUserId: payerMember.userId!,
         splitType: data.splitType,
         date: data.date || new Date(),
         notes: data.notes,
