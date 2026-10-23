@@ -74,12 +74,25 @@ export async function updateGroup(req: AuthRequest, res: Response) {
 
 export async function archiveGroup(req: AuthRequest, res: Response) {
   try {
-    const group = await groupsService.archiveGroup(req.params.groupId, req.userId!);
-    res.json({ success: true, data: { group } });
+    const result = await groupsService.archiveGroup(req.params.groupId, req.userId!);
+    res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(403).json({
       success: false,
       error: { code: 'ARCHIVE_GROUP_FAILED', message: error.message },
+    });
+  }
+}
+
+export async function getTripSummary(req: AuthRequest, res: Response) {
+  try {
+    const summary = await groupsService.getTripSummary(req.params.groupId, req.userId!);
+    res.json({ success: true, data: { summary } });
+  } catch (error: any) {
+    const status = error.message.includes('archived') ? 400 : 403;
+    res.status(status).json({
+      success: false,
+      error: { code: 'GET_SUMMARY_FAILED', message: error.message },
     });
   }
 }
