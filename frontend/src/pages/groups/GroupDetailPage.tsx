@@ -27,6 +27,7 @@ interface Group {
   description: string | null;
   isTrip: boolean;
   tripEndDate: string | null;
+  isArchived: boolean;
   members: Member[];
 }
 
@@ -45,6 +46,8 @@ export function GroupDetailPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('members');
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const { data: groupData, isLoading: groupLoading, refetch: refetchGroup } = useQuery({
     queryKey: ['group', groupId],
@@ -75,24 +78,89 @@ export function GroupDetailPage() {
     return member.user?.name ?? member.placeholderName ?? 'Unknown';
   };
 
+  const handleArchiveTrip = async () => {
+    setIsArchiving(true);
+    try {
+      await api.delete(`/groups/${groupId}`);
+      navigate(`/groups/${groupId}/summary`);
+    } catch (error: any) {
+      alert(error.response?.data?.error?.message || 'Failed to archive trip');
+      setIsArchiving(false);
+      setShowArchiveConfirm(false);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <button
-          onClick={() => navigate('/dashboard')}
+      <button
+        onClick={() => navigate('/dashboard')}
+        style={{
+          padding: '8px 16px',
+          backgroundColor: '#ddd',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          marginBottom: '15px',
+        }}
+      >
+        ← Back to Dashboard
+      </button>
+
+      {/* Archived Banner */}
+      {groupData.isArchived && (
+        <div
           style={{
-            padding: '8px 16px',
-            backgroundColor: '#ddd',
-            border: 'none',
+            padding: '15px',
+            backgroundColor: '#fff3e0',
+            border: '1px solid #ff9800',
             borderRadius: '4px',
-            cursor: 'pointer',
-            marginBottom: '10px',
+            marginBottom: '15px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          â† Back to Dashboard
-        </button>
-        <h1>{groupData.name}</h1>
-        {groupData.description && <p style={{ color: '#666' }}>{groupData.description}</p>}
+          <span style={{ fontWeight: 'bold' }}>This trip has been archived.</span>
+          <button
+            onClick={() => navigate(`/groups/${groupId}/summary`)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#2196F3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            View Summary →
+          </button>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div>
+          <h1 style={{ marginTop: 0 }}>{groupData.name}</h1>
+          {groupData.description && <p style={{ color: '#666', marginTop: '5px' }}>{groupData.description}</p>}
+        </div>
+
+        {/* Archive Trip Button */}
+        {groupData.isTrip && !groupData.isArchived && (
+          <button
+            onClick={() => setShowArchiveConfirm(true)}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#ff9800',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              flexShrink: 0,
+            }}
+          >
+            Archive Trip
+          </button>
+        )}
       </div>
 
       {/* Tab Bar */}
@@ -302,6 +370,68 @@ export function GroupDetailPage() {
             refetchGroup();
           }}
         />
+      )}
+
+      {/* Archive Confirmation Modal */}
+      {showArchiveConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => !isArchiving && setShowArchiveConfirm(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '30px',
+              borderRadius: '8px',
+              maxWidth: '500px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0 }}>Archive Trip?</h2>
+            <p>Are you sure? This will archive the trip and generate a final summary.</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button
+                onClick={() => setShowArchiveConfirm(false)}
+                disabled={isArchiving}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#999',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isArchiving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleArchiveTrip}
+                disabled={isArchiving}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#ff9800',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isArchiving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {isArchiving ? 'Archiving...' : 'Yes, Archive'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

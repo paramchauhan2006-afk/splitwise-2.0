@@ -11,6 +11,7 @@ import { GroupDetailPage } from './pages/groups/GroupDetailPage';
 import { CreateExpensePage } from './pages/expenses/CreateExpensePage';
 import { BalancesPage } from './pages/balances/BalancesPage';
 import { SettlementsPage } from './pages/settlements/SettlementsPage';
+import { TripSummaryPage } from './pages/groups/TripSummaryPage';
 
 function App() {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -35,6 +36,7 @@ function App() {
           <Route path='/dashboard' element={currentUser ? <DashboardPage /> : <Navigate to='/login' />} />
           <Route path='/groups/create' element={currentUser ? <CreateGroupPage /> : <Navigate to='/login' />} />
           <Route path='/groups/:groupId' element={currentUser ? <GroupDetailPage /> : <Navigate to='/login' />} />
+          <Route path='/groups/:groupId/summary' element={currentUser ? <TripSummaryPage /> : <Navigate to='/login' />} />
           <Route path='/groups/:groupId/expenses/create' element={currentUser ? <CreateExpensePage /> : <Navigate to='/login' />} />
           <Route path='/groups/:groupId/balances' element={currentUser ? <BalancesPage /> : <Navigate to='/login' />} />
           <Route path='/groups/:groupId/settlements' element={currentUser ? <SettlementsPage /> : <Navigate to='/login' />} />
