@@ -8,6 +8,7 @@ import membersRoutes from './routes/members.routes';
 import expensesRoutes from './routes/expenses.routes';
 import balancesRoutes from './routes/balances.routes';
 import settlementsRoutes from './routes/settlements.routes';
+import aiRoutes from './routes/ai.routes';
 import { authMiddleware } from './middleware/auth.middleware';
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/groups/:groupId/members', authMiddleware, membersRoutes);
 app.use('/api/groups/:groupId/expenses', authMiddleware, expensesRoutes);
 app.use('/api/groups/:groupId/balances', authMiddleware, balancesRoutes);
 app.use('/api/groups/:groupId/settlements', authMiddleware, settlementsRoutes);
+app.use('/api/ai', authMiddleware, aiRoutes);
 
 app.use(errorHandler);
 
