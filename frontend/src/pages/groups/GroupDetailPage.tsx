@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { formatCurrency } from '../../utils/moneyUtils';
 import { AddMemberModal } from '../../components/group/AddMemberModal';
+import { NLPExpenseInput } from '../../components/expense/NLPExpenseInput';
+import { NLPConfirmScreen } from '../../components/expense/NLPConfirmScreen';
+import { ParsedExpense } from '../../types/expense';
 
 interface User {
   id: string;
@@ -40,14 +43,18 @@ interface Expense {
 }
 
 type TabType = 'members' | 'expenses' | 'balances';
+type ExpenseInputMode = 'manual' | 'ai';
 
 export function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('members');
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [expenseInputMode, setExpenseInputMode] = useState<ExpenseInputMode>('manual');
+  const [parsedExpense, setParsedExpense] = useState<ParsedExpense | null>(null);
 
   const { data: groupData, isLoading: groupLoading, refetch: refetchGroup } = useQuery({
     queryKey: ['group', groupId],
@@ -88,6 +95,20 @@ export function GroupDetailPage() {
       setIsArchiving(false);
       setShowArchiveConfirm(false);
     }
+  };
+
+  const handleNLPParsed = (parsed: ParsedExpense) => {
+    setParsedExpense(parsed);
+  };
+
+  const handleNLPConfirm = () => {
+    queryClient.invalidateQueries({ queryKey: ['expenses', groupId] });
+    setParsedExpense(null);
+    setExpenseInputMode('manual');
+  };
+
+  const handleNLPCancel = () => {
+    setParsedExpense(null);
   };
 
   return (
@@ -288,20 +309,78 @@ export function GroupDetailPage() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <h2>Expenses</h2>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  setExpenseInputMode('manual');
+                  setParsedExpense(null);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: expenseInputMode === 'manual' ? '#007bff' : '#eee',
+                  color: expenseInputMode === 'manual' ? 'white' : '#333',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Add Manually
+              </button>
+              <button
+                onClick={() => {
+                  setExpenseInputMode('ai');
+                  setParsedExpense(null);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: expenseInputMode === 'ai' ? '#007bff' : '#eee',
+                  color: expenseInputMode === 'ai' ? 'white' : '#333',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Add with AI
+              </button>
+            </div>
+          </div>
+
+          {/* AI Input Mode */}
+          {expenseInputMode === 'ai' && !parsedExpense && (
+            <NLPExpenseInput groupId={groupId!} onParsed={handleNLPParsed} />
+          )}
+
+          {/* AI Confirm Screen */}
+          {expenseInputMode === 'ai' && parsedExpense && (
+            <NLPConfirmScreen
+              groupId={groupId!}
+              parsed={parsedExpense}
+              members={groupData.members}
+              onConfirm={handleNLPConfirm}
+              onCancel={handleNLPCancel}
+            />
+          )}
+
+          {/* Manual Add Button */}
+          {expenseInputMode === 'manual' && (
             <button
               onClick={() => navigate(`/groups/${groupId}/expenses/create`)}
               style={{
-                padding: '8px 16px',
+                padding: '10px 20px',
                 backgroundColor: '#4CAF50',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
+                marginBottom: '15px',
               }}
             >
               Add Expense
             </button>
-          </div>
+          )}
+
           {expensesLoading ? (
             <div>Loading expenses...</div>
           ) : expensesData && expensesData.length > 0 ? (
