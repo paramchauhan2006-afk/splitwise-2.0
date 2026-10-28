@@ -5,6 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  upiId?: string | null;
 }
 
 interface AuthState {
@@ -14,6 +15,7 @@ interface AuthState {
   register: (data: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
+  setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -55,5 +57,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error) {
       set({ currentUser: null, isLoading: false });
     }
+  },
+
+  setUser: (user) => {
+    set({ currentUser: user });
   },
 }));

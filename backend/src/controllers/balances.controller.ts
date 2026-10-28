@@ -1,4 +1,4 @@
-﻿import { Response } from 'express';
+import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import * as balanceEngine from '../services/balanceEngine';
 import { prisma } from '../lib/prisma';
@@ -17,7 +17,7 @@ export async function getBalances(req: AuthRequest, res: Response) {
     // Fetch member details in one query
     const members = await prisma.groupMember.findMany({
       where: { id: { in: Array.from(allMemberIds) } },
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { user: { select: { id: true, name: true, email: true, upiId: true } } },
     });
     const memberMap = new Map(members.map(m => [m.id, m]));
 

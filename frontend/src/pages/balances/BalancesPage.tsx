@@ -4,12 +4,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { formatCurrency } from '../../utils/moneyUtils';
 import { SettleUpModal } from '../../components/balance/SettleUpModal';
+import { buildUpiLink } from '../../utils/upiUtils';
 
 interface Member {
   id: string;
   userId: string | null;
   placeholderName: string | null;
-  user: { id: string; name: string; email: string } | null;
+  upiId: string | null;
+  user: { id: string; name: string; email: string; upiId?: string | null } | null;
 }
 
 interface Balance {
@@ -46,6 +48,20 @@ export function BalancesPage() {
 
   const getMemberDisplayName = (member: Member) => {
     return member.user?.name ?? member.placeholderName ?? 'Unknown';
+  };
+
+  const handleUpiPayClick = (balance: Balance) => {
+    const upiId = balance.toMember.user?.upiId ?? balance.toMember.upiId;
+    if (!upiId) return;
+
+    const upiLink = buildUpiLink({
+      upiId,
+      name: getMemberDisplayName(balance.toMember),
+      amountPaise: balance.amountPaise,
+      note: 'Splitwise 2.0 settlement',
+    });
+    
+    window.open(upiLink, '_blank');
   };
 
   const handleSettleUpClick = (balance: Balance) => {
@@ -148,19 +164,43 @@ export function BalancesPage() {
                   {formatCurrency(balance.amountPaise)}
                 </div>
               </div>
-              <button
-                onClick={() => handleSettleUpClick(balance)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Settle Up
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {(balance.toMember.user?.upiId || balance.toMember.upiId) && (
+                    <button
+                      onClick={() => handleUpiPayClick(balance)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#FF9800',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Pay via UPI
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleSettleUpClick(balance)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Settle Up
+                  </button>
+                </div>
+                {(balance.toMember.user?.upiId || balance.toMember.upiId) && (
+                  <span style={{ fontSize: '12px', color: '#666', textAlign: 'right', maxWidth: '200px' }}>
+                    Opens your UPI app. Come back and mark as settled after paying.
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
