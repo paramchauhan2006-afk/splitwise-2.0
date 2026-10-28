@@ -23,6 +23,36 @@ export interface ParsedExpense {
   rawText: string;
 }
 
+export interface ScannedBill {
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPricePaise: number;
+    totalPricePaise: number;
+  }>;
+  subtotalPaise: number;
+  taxPaise: number;
+  discountPaise: number;
+  grandTotalPaise: number;
+  vendor: string | null;
+  confidence: number;
+}
+
+interface GeminiBillResponse {
+  vendor: string | null;
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPriceRupees: number;
+    totalPriceRupees: number;
+  }>;
+  subtotalRupees: number;
+  taxRupees: number;
+  discountRupees: number;
+  grandTotalRupees: number;
+  confidence: number;
+}
+
 export async function parseExpenseFromText(
   text: string,
   groupMembers: GroupMember[]
@@ -126,6 +156,116 @@ Rules:
       suggestedPayerMemberId: null,
       confidence: 0.2,
       rawText: text,
+    };
+  }
+}
+
+export async function scanBillFromImage(
+  imageBase64: string,
+  mimeType: string
+): Promise<ScannedBill> {
+  const prompt = `You are a bill scanning assistant for a bill-splitting app.
+Extract bill/receipt information from this image and respond with ONLY 
+a JSON object — no markdown, no explanation, just raw JSON.
+
+Respond with exactly this JSON structure:
+{
+  "vendor": "restaurant or shop name or null",
+  "items": [
+    {
+      "description": "item name",
+      "quantity": 1,
+      "unitPriceRupees": 0.00,
+      "totalPriceRupees": 0.00
+    }
+  ],
+  "subtotalRupees": 0.00,
+  "taxRupees": 0.00,
+  "discountRupees": 0.00,
+  "grandTotalRupees": 0.00,
+  "confidence": 0.0
+}
+
+Rules:
+- Extract ALL line items from the bill with their quantities and prices
+- subtotalRupees: sum of all items before tax/discount
+- taxRupees: any tax, GST, service charge, or similar
+- discountRupees: any discount applied (as positive number)
+- grandTotalRupees: final total amount to pay
+- confidence: your confidence from 0.0 to 1.0 in the extraction accuracy
+- If a field is not present on the bill, use 0 or null
+- All prices must be decimal numbers (e.g. 150.50)`;
+
+  try {
+    const response = await gemini.models.generateContent({
+      model: 'gemini-3.5-flash-lite',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: imageBase64,
+              },
+            },
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    });
+
+    const responseText = response.text ?? '';
+
+    let geminiBillResponse: GeminiBillResponse;
+    try {
+      const cleanedText = responseText
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      geminiBillResponse = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return {
+        items: [],
+        subtotalPaise: 0,
+        taxPaise: 0,
+        discountPaise: 0,
+        grandTotalPaise: 0,
+        vendor: null,
+        confidence: 0.2,
+      };
+    }
+
+    // Convert all rupee values to paise
+    const items = geminiBillResponse.items.map((item) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPricePaise: Math.floor(item.unitPriceRupees * 100),
+      totalPricePaise: Math.floor(item.totalPriceRupees * 100),
+    }));
+
+    return {
+      items,
+      subtotalPaise: Math.floor(geminiBillResponse.subtotalRupees * 100),
+      taxPaise: Math.floor(geminiBillResponse.taxRupees * 100),
+      discountPaise: Math.floor(geminiBillResponse.discountRupees * 100),
+      grandTotalPaise: Math.floor(geminiBillResponse.grandTotalRupees * 100),
+      vendor: geminiBillResponse.vendor,
+      confidence: geminiBillResponse.confidence,
+    };
+  } catch (error) {
+    console.error('Bill scanning error:', error);
+    return {
+      items: [],
+      subtotalPaise: 0,
+      taxPaise: 0,
+      discountPaise: 0,
+      grandTotalPaise: 0,
+      vendor: null,
+      confidence: 0.2,
     };
   }
 }
