@@ -5,6 +5,7 @@ import { queryClient } from './lib/queryClient';
 import { useAuthStore } from './stores/authStore';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
+import { ProfilePage } from './pages/auth/ProfilePage';
 import { DashboardPage } from './pages/groups/GroupsListPage';
 import { CreateGroupPage } from './pages/groups/CreateGroupPage';
 import { GroupDetailPage } from './pages/groups/GroupDetailPage';
@@ -33,6 +34,7 @@ function App() {
           <Route path='/' element={currentUser ? <Navigate to='/dashboard' /> : <Navigate to='/login' />} />
           <Route path='/login' element={<LoginPage />} />
           <Route path='/register' element={<RegisterPage />} />
+          <Route path='/profile' element={currentUser ? <ProfilePage /> : <Navigate to='/login' />} />
           <Route path='/dashboard' element={currentUser ? <DashboardPage /> : <Navigate to='/login' />} />
           <Route path='/groups/create' element={currentUser ? <CreateGroupPage /> : <Navigate to='/login' />} />
           <Route path='/groups/:groupId' element={currentUser ? <GroupDetailPage /> : <Navigate to='/login' />} />

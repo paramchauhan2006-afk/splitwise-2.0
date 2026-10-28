@@ -37,19 +37,34 @@ export function DashboardPage() {
     <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1>Welcome, {currentUser?.name}!</h1>
-        <button
-          onClick={() => logout()}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#999',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Logout
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => navigate('/profile')}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#2196F3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            My Profile
+          </button>
+          <button
+            onClick={() => logout()}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#999',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Active Groups Section */}

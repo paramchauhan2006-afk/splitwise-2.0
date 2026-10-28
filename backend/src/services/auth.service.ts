@@ -1,7 +1,7 @@
-﻿import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 
-export async function register(name: string, email: string, password: string) {
+export async function register(name: string, email: string, password: string, upiId?: string) {
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     throw new Error('Email already exists');
@@ -9,7 +9,7 @@ export async function register(name: string, email: string, password: string) {
 
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    data: { name, email, passwordHash },
+    data: { name, email, passwordHash, upiId },
   });
 
   const { passwordHash: _, ...userWithoutPassword } = user;
@@ -36,6 +36,19 @@ export async function getMe(userId: string) {
   if (!user) {
     throw new Error('User not found');
   }
+
+  const { passwordHash: _, ...userWithoutPassword } = user;
+  return userWithoutPassword;
+}
+
+export async function updateProfile(
+  userId: string,
+  data: { upiId?: string; name?: string; phone?: string }
+) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data,
+  });
 
   const { passwordHash: _, ...userWithoutPassword } = user;
   return userWithoutPassword;
