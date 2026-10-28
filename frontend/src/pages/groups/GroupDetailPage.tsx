@@ -6,6 +6,7 @@ import { formatCurrency } from '../../utils/moneyUtils';
 import { AddMemberModal } from '../../components/group/AddMemberModal';
 import { NLPExpenseInput } from '../../components/expense/NLPExpenseInput';
 import { NLPConfirmScreen } from '../../components/expense/NLPConfirmScreen';
+import { BillScanner } from '../../components/expense/BillScanner';
 import { ParsedExpense } from '../../types/expense';
 
 interface User {
@@ -43,7 +44,7 @@ interface Expense {
 }
 
 type TabType = 'members' | 'expenses' | 'balances';
-type ExpenseInputMode = 'manual' | 'ai';
+type ExpenseInputMode = 'manual' | 'ai' | 'scan';
 
 export function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -344,6 +345,23 @@ export function GroupDetailPage() {
               >
                 Add with AI
               </button>
+              <button
+                onClick={() => {
+                  setExpenseInputMode('scan');
+                  setParsedExpense(null);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: expenseInputMode === 'scan' ? '#007bff' : '#eee',
+                  color: expenseInputMode === 'scan' ? 'white' : '#333',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Scan Bill
+              </button>
             </div>
           </div>
 
@@ -360,6 +378,19 @@ export function GroupDetailPage() {
               members={groupData.members}
               onConfirm={handleNLPConfirm}
               onCancel={handleNLPCancel}
+            />
+          )}
+
+          {/* Bill Scanner */}
+          {expenseInputMode === 'scan' && (
+            <BillScanner
+              groupId={groupId!}
+              members={groupData.members}
+              onComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ['expenses', groupId] });
+                setExpenseInputMode('manual');
+              }}
+              onCancel={() => setExpenseInputMode('manual')}
             />
           )}
 

@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.middleware';
-import { parseExpenseFromText } from '../services/aiService';
+import { parseExpenseFromText, scanBillFromImage } from '../services/aiService';
 import { prisma } from '../lib/prisma';
 
 const parseExpenseSchema = z.object({
@@ -69,6 +69,60 @@ export async function parseExpense(req: AuthRequest, res: Response) {
     res.status(500).json({
       success: false,
       error: { code: 'PARSE_FAILED', message: 'Failed to parse expense' },
+    });
+  }
+}
+
+export async function scanBill(req: AuthRequest, res: Response) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NO_IMAGE', message: 'Image file is required' },
+      });
+    }
+
+    const groupId = req.body.groupId;
+    if (!groupId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NO_GROUP_ID', message: 'Group ID is required' },
+      });
+    }
+
+    const membership = await prisma.groupMember.findFirst({
+      where: {
+        groupId: groupId,
+        userId: req.userId!,
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'NOT_MEMBER', message: 'Not a member of this group' },
+      });
+    }
+
+    const imageBase64 = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype;
+
+    const scannedBill = await scanBillFromImage(imageBase64, mimeType);
+
+    const warning = 'AI-generated data. Please review before saving.';
+
+    res.json({
+      success: true,
+      data: {
+        scannedBill,
+        warning,
+      },
+    });
+  } catch (error: any) {
+    console.error('Scan bill error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'SCAN_FAILED', message: 'Failed to scan bill' },
     });
   }
 }
