@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middleware/errorHandler';
@@ -14,7 +14,19 @@ import { authMiddleware } from './middleware/auth.middleware';
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      /\.vercel\.app$/,
+    ];
+    if (!origin) return callback(null, true);
+    const isAllowed = allowedOrigins.some(allowed => 
+      typeof allowed === 'string' 
+        ? allowed === origin 
+        : allowed.test(origin)
+    );
+    callback(null, isAllowed);
+  },
   credentials: true,
 }));
 
