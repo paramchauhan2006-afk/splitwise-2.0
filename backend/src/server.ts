@@ -14,17 +14,14 @@ import { authMiddleware } from './middleware/auth.middleware';
 const app = express();
 
 app.use(cors({
-  origin: (origin, callback) => {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     const allowedOrigins = [
       process.env.FRONTEND_URL,
-      /\.vercel\.app$/,
     ];
     if (!origin) return callback(null, true);
-    const isAllowed = allowedOrigins.some(allowed => 
-      typeof allowed === 'string' 
-        ? allowed === origin 
-        : allowed.test(origin)
-    );
+    const isAllowed = allowedOrigins.some(allowed =>
+      allowed && allowed === origin
+    ) || /\.vercel\.app$/.test(origin);
     callback(null, isAllowed);
   },
   credentials: true,
