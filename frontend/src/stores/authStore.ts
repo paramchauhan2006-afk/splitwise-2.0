@@ -10,6 +10,7 @@ interface User {
 
 interface AuthState {
   currentUser: User | null;
+  token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: { name: string; email: string; password: string }) => Promise<void>;
@@ -18,15 +19,16 @@ interface AuthState {
   setUser: (user: User) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>()((set, get) => ({
   currentUser: null,
+  token: null,
   isLoading: true,
 
   login: async (email, password) => {
     set({ isLoading: true });
     try {
       const response = await api.post('/auth/login', { email, password });
-      set({ currentUser: response.data.data.user, isLoading: false });
+      set({ currentUser: response.data.data.user, token: response.data.data.token, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -37,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const response = await api.post('/auth/register', data);
-      set({ currentUser: response.data.data.user, isLoading: false });
+      set({ currentUser: response.data.data.user, token: response.data.data.token, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;
@@ -46,16 +48,21 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await api.post('/auth/logout');
-    set({ currentUser: null });
+    set({ currentUser: null, token: null });
   },
 
   fetchMe: async () => {
     set({ isLoading: true });
+    const token = get().token;
+    if (!token) {
+      set({ currentUser: null, isLoading: false });
+      return;
+    }
     try {
       const response = await api.get('/auth/me');
       set({ currentUser: response.data.data.user, isLoading: false });
     } catch (error) {
-      set({ currentUser: null, isLoading: false });
+      set({ currentUser: null, token: null, isLoading: false });
     }
   },
 

@@ -7,17 +7,25 @@ export function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const register = useAuthStore((state) => state.register);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
+    setIsLoading(true);
     try {
       await register({ name, email, password });
-      navigate('/dashboard');
+      setSuccess('Registration successful! Redirecting...');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Registration failed');
+      setIsLoading(false);
     }
   };
 
@@ -56,9 +64,50 @@ export function RegisterPage() {
             style={{ width: '100%', padding: '8px' }}
           />
         </div>
-        {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
-        <button type='submit' style={{ padding: '10px 20px' }}>
-          Register
+        {error && (
+          <div
+            style={{
+              padding: '10px',
+              backgroundColor: '#ffebee',
+              color: '#c62828',
+              borderRadius: '4px',
+              border: '1px solid #ef5350',
+              marginBottom: '10px',
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div
+            style={{
+              padding: '10px',
+              backgroundColor: '#e8f5e9',
+              color: '#2e7d32',
+              borderRadius: '4px',
+              border: '1px solid #66bb6a',
+              marginBottom: '10px',
+            }}
+          >
+            {success}
+          </div>
+        )}
+
+        <button
+          type='submit'
+          disabled={isLoading}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.6 : 1,
+          }}
+        >
+          {isLoading ? 'Creating account...' : 'Register'}
         </button>
       </form>
       <p style={{ marginTop: '20px' }}>

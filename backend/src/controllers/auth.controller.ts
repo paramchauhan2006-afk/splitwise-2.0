@@ -22,14 +22,7 @@ export async function register(req: AuthRequest, res: Response) {
     const user = await authService.register(body.name, body.email, body.password, body.upiId);
     const token = signToken(user.id);
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.status(201).json({ success: true, data: { user } });
+    res.status(201).json({ success: true, data: { user, token } });
   } catch (error: any) {
     res.status(400).json({
       success: false,
@@ -44,14 +37,7 @@ export async function login(req: AuthRequest, res: Response) {
     const user = await authService.login(body.email, body.password);
     const token = signToken(user.id);
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.json({ success: true, data: { user } });
+    res.json({ success: true, data: { user, token } });
   } catch (error: any) {
     res.status(401).json({
       success: false,
@@ -61,12 +47,7 @@ export async function login(req: AuthRequest, res: Response) {
 }
 
 export async function logout(req: AuthRequest, res: Response) {
-  res.clearCookie('token', {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'none',
-});
-  res.json({ success: true, data: { message: 'Logged out successfully' } });
+  res.json({ success: true, data: { message: 'Logged out' } });
 }
 
 export async function getMe(req: AuthRequest, res: Response) {
