@@ -1,4 +1,4 @@
-import { gemini } from '../lib/gemini';
+import { getGemini } from '../lib/gemini';
 
 interface GroupMember {
   id: string;
@@ -86,6 +86,7 @@ Rules:
 - Only use names from the group members list above`;
 
   try {
+    const gemini = await getGemini();
   const response = await gemini.models.generateContent({
     model: 'gemini-3.5-flash-lite',
     contents: prompt,
@@ -197,6 +198,7 @@ Rules:
 - All prices must be decimal numbers (e.g. 150.50)`;
 
   try {
+    const gemini = await getGemini();
     const response = await gemini.models.generateContent({
       model: 'gemini-3.5-flash-lite',
       contents: [
