@@ -36,6 +36,7 @@ export function RegisterPage() {
   return (
     <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
       <h1>Register</h1>
+      <p style={{ fontSize: '10px', color: '#999' }}>v2.1 - Token localStorage</p>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>
           <label>Name:</label>
