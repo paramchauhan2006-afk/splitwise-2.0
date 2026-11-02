@@ -26,7 +26,9 @@ export function RegisterPage() {
     } catch (err: any) {
       console.error('Registration error:', err);
       console.error('Error response:', err.response);
-      setError(err.response?.data?.error?.message || err.message || 'Registration failed');
+      const errorMessage = err.response?.data?.error?.message || err.message || 'Registration failed';
+      console.error('Parsed error message:', errorMessage);
+      setError(errorMessage);
       setIsLoading(false);
     }
   };

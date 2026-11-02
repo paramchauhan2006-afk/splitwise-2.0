@@ -20,7 +20,9 @@ export function LoginPage() {
     } catch (err: any) {
       console.error('Login error:', err);
       console.error('Error response:', err.response);
-      setError(err.response?.data?.error?.message || err.message || 'Invalid email or password');
+      const errorMessage = err.response?.data?.error?.message || err.message || 'Invalid email or password';
+      console.error('Parsed error message:', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
