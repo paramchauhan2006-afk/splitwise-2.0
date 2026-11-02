@@ -13,6 +13,7 @@ import { authMiddleware } from './middleware/auth.middleware';
 
 const app = express();
 
+// CORS configuration for cross-origin requests
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins: (string | RegExp)[] = [
