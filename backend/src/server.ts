@@ -15,18 +15,20 @@ const app = express();
 
 app.use(cors({
   origin: (origin, callback) => {
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
+    const allowedOrigins: (string | RegExp)[] = [
+      process.env.FRONTEND_URL || '',
       /\.vercel\.app$/,
     ];
     // Allow requests with no origin (like mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    const isAllowed = allowedOrigins.some(allowed => 
-      typeof allowed === 'string' 
-        ? allowed === origin 
-        : allowed.test(origin)
-    );
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return allowed === origin;
+      } else {
+        return allowed.test(origin);
+      }
+    });
     
     if (isAllowed) {
       callback(null, true);
