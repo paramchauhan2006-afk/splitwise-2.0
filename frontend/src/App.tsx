@@ -22,7 +22,7 @@ function App() {
 
   useEffect(() => {
     fetchMe();
-  }, []);
+  }, [fetchMe]);
 
   if (isLoading) {
     return <div style={{ padding: '40px', textAlign: 'center', fontSize: '18px' }}>Loading...</div>;
