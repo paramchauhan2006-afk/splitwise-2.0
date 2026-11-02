@@ -16,8 +16,10 @@ export function LoginPage() {
     setIsLoading(true);
     try {
       await login(email, password);
-      // Force full page navigation to ensure state is updated
-      window.location.href = '/dashboard';
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
     } catch (err: any) {
       console.error('Login error:', err);
       console.error('Error response:', err.response);
