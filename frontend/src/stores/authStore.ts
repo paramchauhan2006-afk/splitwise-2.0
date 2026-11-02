@@ -17,12 +17,22 @@ interface AuthState {
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
   setUser: (user: User) => void;
+  setToken: (token: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
   currentUser: null,
-  token: null,
+  token: localStorage.getItem('authToken'), // Load token from localStorage on init
   isLoading: true,
+
+  setToken: (token) => {
+    if (token) {
+      localStorage.setItem('authToken', token);
+    } else {
+      localStorage.removeItem('authToken');
+    }
+    set({ token });
+  },
 
   login: async (email, password) => {
     set({ isLoading: true });
@@ -30,7 +40,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       console.log('Attempting login...', { email });
       const response = await api.post('/auth/login', { email, password });
       console.log('Login response:', response.data);
-      set({ currentUser: response.data.data.user, token: response.data.data.token, isLoading: false });
+      const { user, token } = response.data.data;
+      get().setToken(token);
+      set({ currentUser: user, isLoading: false });
       console.log('Login successful, user and token set');
     } catch (error: any) {
       console.error('Login failed:', error);
@@ -46,7 +58,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       console.log('Attempting registration...', { name: data.name, email: data.email });
       const response = await api.post('/auth/register', data);
       console.log('Registration response:', response.data);
-      set({ currentUser: response.data.data.user, token: response.data.data.token, isLoading: false });
+      const { user, token } = response.data.data;
+      get().setToken(token);
+      set({ currentUser: user, isLoading: false });
       console.log('Registration successful, user and token set');
     } catch (error: any) {
       console.error('Registration failed:', error);
@@ -58,7 +72,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
   logout: async () => {
     await api.post('/auth/logout');
-    set({ currentUser: null, token: null });
+    get().setToken(null);
+    set({ currentUser: null });
   },
 
   fetchMe: async () => {
@@ -72,7 +87,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const response = await api.get('/auth/me');
       set({ currentUser: response.data.data.user, isLoading: false });
     } catch (error) {
-      set({ currentUser: null, token: null, isLoading: false });
+      get().setToken(null);
+      set({ currentUser: null, isLoading: false });
     }
   },
 
