@@ -18,7 +18,9 @@ export function LoginPage() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Invalid email or password');
+      console.error('Login error:', err);
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.error?.message || err.message || 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }

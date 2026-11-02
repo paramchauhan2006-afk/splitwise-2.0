@@ -24,7 +24,9 @@ export function RegisterPage() {
         navigate('/dashboard');
       }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Registration failed');
+      console.error('Registration error:', err);
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.error?.message || err.message || 'Registration failed');
       setIsLoading(false);
     }
   };

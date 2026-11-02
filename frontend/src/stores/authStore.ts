@@ -27,9 +27,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   login: async (email, password) => {
     set({ isLoading: true });
     try {
+      console.log('Attempting login...', { email });
       const response = await api.post('/auth/login', { email, password });
+      console.log('Login response:', response.data);
       set({ currentUser: response.data.data.user, token: response.data.data.token, isLoading: false });
-    } catch (error) {
+      console.log('Login successful, user and token set');
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      console.error('Error response:', error.response?.data);
       set({ isLoading: false });
       throw error;
     }
@@ -38,9 +43,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   register: async (data) => {
     set({ isLoading: true });
     try {
+      console.log('Attempting registration...', { name: data.name, email: data.email });
       const response = await api.post('/auth/register', data);
+      console.log('Registration response:', response.data);
       set({ currentUser: response.data.data.user, token: response.data.data.token, isLoading: false });
-    } catch (error) {
+      console.log('Registration successful, user and token set');
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      console.error('Error response:', error.response?.data);
       set({ isLoading: false });
       throw error;
     }
