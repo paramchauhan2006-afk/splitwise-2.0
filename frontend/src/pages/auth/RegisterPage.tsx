@@ -21,7 +21,8 @@ export function RegisterPage() {
       await register({ name, email, password });
       setSuccess('Registration successful! Redirecting...');
       setTimeout(() => {
-        navigate('/dashboard');
+        // Force full page navigation to ensure state is updated
+        window.location.href = '/dashboard';
       }, 1000);
     } catch (err: any) {
       console.error('Registration error:', err);
