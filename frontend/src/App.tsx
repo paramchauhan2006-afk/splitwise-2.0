@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -17,12 +16,12 @@ import { TripSummaryPage } from './pages/groups/TripSummaryPage';
 
 function App() {
   const currentUser = useAuthStore((state) => state.currentUser);
-  const fetchMe = useAuthStore((state) => state.fetchMe);
   const isLoading = useAuthStore((state) => state.isLoading);
 
   useEffect(() => {
-    fetchMe();
-  }, [fetchMe]);
+    // Fetch user data on mount only once
+    useAuthStore.getState().fetchMe();
+  }, []);
 
   if (isLoading) {
     return <div style={{ padding: '40px', textAlign: 'center', fontSize: '18px' }}>Loading...</div>;
